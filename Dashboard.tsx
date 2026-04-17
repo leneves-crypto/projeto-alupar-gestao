@@ -748,28 +748,27 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   };
 
 const handleResetSimulation = async () => {
-    const confirmacao = window.confirm("ATENÇÃO: Isso apagará os dados de TODAS as equipes. Confirma?");
-    if (!confirmacao) return;
-
     try {
-      toast.info('Limpando banco de dados...');
+      toast.info('Limpando base de dados...');
+      
       const colecoes = ["simulacoes", "logs"];
       
       for (const nomeCol of colecoes) {
         const q = query(collection(db, nomeCol));
         const querySnapshot = await getDocs(q);
         
+        // Deletando...
         const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
         await Promise.all(deletePromises);
       }
 
-      toast.success('Sistema zerado com sucesso!');
+      toast.success('Sucesso! Reiniciando...');
       setTimeout(() => {
         window.location.reload();
       }, 1000);
     } catch (error) {
-      console.error("Erro ao resetar:", error);
-      toast.error('Erro ao conectar com o Firebase.');
+      console.error("Erro:", error);
+      toast.error('Erro de permissão no Firebase.');
     }
   };
   const getProfileIcon = () => {
