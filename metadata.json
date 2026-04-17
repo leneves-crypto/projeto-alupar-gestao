@@ -1,0 +1,8 @@
+{
+  "name": "Gestão de Manutenção SE Rio Novo do Sul",
+  "description": "Sistema robusto para coordenação da Manutenção Hexanual da SE Rio Novo do Sul (Regional Sudeste), integrando checklists técnicos, cronograma em tempo real, acompanhamento por setores e dias, segurança de aterramento e monitoramento climático.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}

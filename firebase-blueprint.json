@@ -1,0 +1,172 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Colaborador do sistema de manutenção",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["tecnico", "lider", "coordenador", "engenharia", "tst"] },
+        "teamId": { "type": "string" }
+      },
+      "required": ["uid", "name", "email", "role"]
+    },
+    "Team": {
+      "title": "Team",
+      "description": "Equipe de manutenção",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "activity": { "type": "string" }
+      },
+      "required": ["id", "name"]
+    },
+    "Asset": {
+      "title": "Asset",
+      "description": "Ativo de potência ou manobra",
+      "type": "object",
+      "properties": {
+        "tag": { "type": "string" },
+        "type": { "type": "string" },
+        "sector": { "type": "string", "enum": ["345kV", "138kV"] }
+      },
+      "required": ["tag", "type", "sector"]
+    },
+    "MaintenanceTask": {
+      "title": "MaintenanceTask",
+      "description": "Tarefa de manutenção preventiva",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "assetTag": { "type": "string" },
+        "teamId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pendente", "em_execucao", "concluido"] },
+        "pmo": { "type": "string" },
+        "measurements": {
+          "type": "object",
+          "properties": {
+            "contactResistance": { "type": "number" },
+            "openingTime": { "type": "number" },
+            "closingTime": { "type": "number" }
+          }
+        },
+        "photos": { "type": "array", "items": { "type": "string" } },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "updatedBy": { "type": "string" }
+      },
+      "required": ["id", "assetTag", "teamId", "status"]
+    },
+    "GroundingPoint": {
+      "title": "GroundingPoint",
+      "description": "Ponto de aterramento temporário",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "bay": { "type": "string" },
+        "day": { "type": "integer" },
+        "status": { "type": "string", "enum": ["pendente", "instalado", "retirado"] },
+        "confirmedBy": { "type": "string" },
+        "confirmedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "bay", "day", "status"]
+    },
+    "Weather": {
+      "title": "Weather",
+      "description": "Dados climáticos em tempo real",
+      "type": "object",
+      "properties": {
+        "humidity": { "type": "number" },
+        "windSpeed": { "type": "number" },
+        "rainProb": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Abnormality": {
+      "title": "Abnormality",
+      "description": "Relato de anormalidade em campo",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "description": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "reportedBy": { "type": "string" },
+        "reportedAt": { "type": "string", "format": "date-time" },
+        "teamId": { "type": "string" }
+      }
+    },
+    "PMOReport": {
+      "title": "PMOReport",
+      "description": "Ficha de manutenção preventiva preenchida",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "taskId": { "type": "string" },
+        "pmoNumber": { "type": "string" },
+        "teamId": { "type": "string" },
+        "substation": { "type": "string" },
+        "date": { "type": "string" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "assetTag": { "type": "string" },
+        "executor": { "type": "string" },
+        "status": { "type": "string", "enum": ["rascunho", "finalizado"] }
+      },
+      "required": ["id", "taskId", "pmoNumber", "teamId", "status"]
+    },
+    "Sector": {
+      "title": "Sector",
+      "description": "Setor de atuação na subestação",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "hasFranchise": { "type": "boolean" },
+        "order": { "type": "integer" }
+      },
+      "required": ["id", "name", "order"]
+    },
+    "SectorActivity": {
+      "title": "SectorActivity",
+      "description": "Atividade diária em um setor",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "sectorId": { "type": "string" },
+        "dayNumber": { "type": "integer" },
+        "date": { "type": "string", "format": "date" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["pendente", "em_execucao", "concluido"] },
+        "foreman": { "type": "string" },
+        "equipment": { "type": "array", "items": { "type": "string" } },
+        "timeline": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "time": { "type": "string" },
+              "description": { "type": "string" },
+              "teamId": { "type": "string" }
+            }
+          }
+        }
+      },
+      "required": ["id", "sectorId", "dayNumber", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": { "schema": "User", "description": "Perfis de usuários" },
+    "/teams/{id}": { "schema": "Team", "description": "Equipes de manutenção" },
+    "/assets/{tag}": { "schema": "Asset", "description": "Ativos da subestação" },
+    "/tasks/{id}": { "schema": "MaintenanceTask", "description": "Tarefas de manutenção" },
+    "/grounding/{id}": { "schema": "GroundingPoint", "description": "Controle de aterramento" },
+    "/weather/current": { "schema": "Weather", "description": "Clima atual" },
+    "/abnormalities/{id}": { "schema": "Abnormality", "description": "Relatos de anormalidades" },
+    "/pmo_reports/{id}": { "schema": "PMOReport", "description": "Relatórios de PMO" },
+    "/sectors/{id}": { "schema": "Sector", "description": "Setores da subestação" },
+    "/sector_activities/{id}": { "schema": "SectorActivity", "description": "Atividades diárias por setor" }
+  }
+}

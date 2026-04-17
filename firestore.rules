@@ -1,0 +1,132 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: users
+// Fields:
+//   - uid: string (required)
+//   - name: string (required)
+//   - email: string (required)
+//   - role: string (required, enum: tecnico, lider, coordenador, engenharia, tst)
+//   - teamId: string (optional)
+//
+// Collection: teams
+// Fields:
+//   - id: string (required)
+//   - name: string (required)
+//   - activity: string (required)
+//
+// Collection: tasks
+// Fields:
+//   - id: string (required)
+//   - assetTag: string (required)
+//   - teamId: string (required)
+//   - status: string (required, enum: pendente, em_execucao, concluido)
+//   - pmo: string (required)
+//   - measurements: map (optional)
+//   - photos: list (optional)
+//   - updatedAt: string (required)
+//   - updatedBy: string (required)
+//
+// Collection: grounding
+// Fields:
+//   - id: string (required)
+//   - bay: string (required)
+//   - day: int (required)
+//   - status: string (required, enum: pendente, instalado, retirado)
+//   - confirmedBy: string (optional)
+//   - confirmedAt: string (optional)
+//
+// Collection: pmo_reports
+// Fields:
+//   - id: string (required)
+//   - taskId: string (required)
+//   - pmoNumber: string (required)
+//   - teamId: string (required)
+//   - status: string (required, enum: rascunho, finalizado)
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (
+          request.auth.token.email == "leneves@alupar.com.br" ||
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['coordenador', 'engenharia', 'developer'])
+        );
+    }
+
+    function isManagement() {
+      return isAuthenticated() &&
+        (
+          request.auth.token.email == "leneves@alupar.com.br" ||
+          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['coordenador', 'engenharia', 'tst', 'developer'])
+        );
+    }
+
+    function isDeveloper() {
+      return isAuthenticated() && request.auth.token.email == "leneves@alupar.com.br";
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.size() > 5 && email.matches(".+@.+\\..+");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data) {
+      return data.uid is string && data.uid.size() > 0 &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             isValidEmail(data.email) &&
+             data.role in ['tecnico', 'lider', 'coordenador', 'engenharia', 'tst', 'developer'];
+    }
+
+    function isValidTask(data) {
+      return data.id is string &&
+             data.assetTag is string &&
+             data.teamId is string &&
+             data.status in ['pendente', 'em_execucao', 'concluido'] &&
+             data.pmo is string;
+    }
+
+    function isValidPMOReport(data) {
+      return data.id is string &&
+             data.taskId is string &&
+             data.pmoNumber is string &&
+             data.teamId is string &&
+             data.status in ['rascunho', 'finalizado'];
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /{allPaths=**} {
+      allow read: if true;
+      allow write: if isAuthenticated();
+    }
+  }
+}
