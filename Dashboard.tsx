@@ -751,33 +751,31 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   };
 
  const handleResetSimulation = async () => {
-    const confirmacao = window.confirm("ATENÇÃO: Isso apagará os dados de TODAS as equipes. Confirma?");
-    if (!confirmacao) return;
+    if (!window.confirm("ATENÇÃO: Isso apagará os dados de TODAS as equipes. Confirma?")) return;
 
     try {
       toast.info('Limpando banco de dados...');
       
-      // Tentativa 1: Apagar coleções na raiz (Caminho antigo)
-      const raiz = ["sector_activities", "grounding", "risks", "simulacoes", "logs"];
-      for (const r of raiz) {
-        const q = query(collection(db, r));
-        const snap = await getDocs(q);
-        await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+      const subColecoes = ["sector_activities", "grounding", "risks"];
+      
+      for (const nomeSub of subColecoes) {
+        // Este é o caminho exato que está no seu print: assets > PROJETO_ALUPAR > subcoleção
+        const colRef = collection(db, "assets", "PROJETO_ALUPAR", nomeSub);
+        const querySnapshot = await getDocs(colRef);
+        
+        // Deletando cada documento individualmente
+        const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
       }
 
-      // Tentativa 2: Apagar dentro de assets (Caminho novo que vimos no print)
-      const sub = ["sector_activities", "grounding", "risks"];
-      for (const s of sub) {
-        const q = query(collection(db, "assets", "PROJETO_ALUPAR", s));
-        const snap = await getDocs(q);
-        await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
-      }
+      toast.success('Sistema zerado com sucesso!');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
 
-      toast.success('Sistema zerado!');
-      setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
-      console.error(error);
-      toast.error('Erro de conexão. Verifique o console.');
+      console.error("Erro técnico detalhado:", error);
+      alert("Erro de conexão com o Firebase. Verifique se as Regras estão como 'true'.");
     }
   };
  const getProfileIcon = () => {
