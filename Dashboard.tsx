@@ -751,25 +751,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   };
 
 const handleResetSimulation = async () => {
+    const confirmacao = window.confirm("ATENÇÃO: Isso apagará os dados de TODAS as equipes. Confirma?");
+    if (!confirmacao) return;
+
     try {
       toast.info('Limpando banco de dados...');
       
-      // Tentamos limpar as coleções conhecidas
-      const colecoes = ["simulacoes", "logs", "atividades"];
+      // Lista das subcoleções que vimos nos seus prints do Firebase
+      const subColecoes = ["sector_activities", "grounding", "risks"];
       
-      for (const nomeCol of colecoes) {
-        const q = query(collection(db, nomeCol));
-        const querySnapshot = await getDocs(q);
+      for (const nomeSub of subColecoes) {
+        // O caminho correto no seu Firebase é: assets > PROJETO_ALUPAR > [nome da pasta]
+        const colRef = collection(db, "assets", "PROJETO_ALUPAR", nomeSub);
+        const querySnapshot = await getDocs(colRef);
         
         const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
         await Promise.all(deletePromises);
       }
 
-      toast.success('Banco de dados resetado!');
+      toast.success('Sistema zerado com sucesso!');
       setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
-      console.error(error);
-      toast.error('Erro de permissão ou conexão.');
+      console.error("Erro ao zerar:", error);
+      toast.error('Falha na conexão: Verifique as Regras do Firebase.');
     }
   };
   const getProfileIcon = () => {
