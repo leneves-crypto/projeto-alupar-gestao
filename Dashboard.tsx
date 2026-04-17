@@ -765,24 +765,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
 
 const handleResetSimulation = async () => {
   try {
-    toast.info('Limpando simulação...');
+    const confirmacao = window.confirm("ISSO APAGARÁ OS DADOS DE TODAS AS EQUIPES. Confirma?");
+    if (!confirmacao) return;
+
+    toast.info('Limpando banco de dados...');
+
+    // Importante: Isso aqui vai deletar os registros do dia 20 para todos
+    const q = query(collection(db, "simulacoes")); // Verifique se o nome da sua coleção é 'simulacoes' ou 'logs'
+    const querySnapshot = await getDocs(q);
     
-    // Aqui nós vamos limpar o que está travando o app
-    localStorage.clear();
-    sessionStorage.clear();
-    
-    // Se você tiver uma função que limpa o banco, ela entra aqui. 
-    // Por enquanto, vamos garantir que o app resete para o usuário:
-    toast.success('Simulação Zerada!');
-    
-    setTimeout(() => {
-      window.location.href = '/'; // Isso recarrega o app do zero
-    }, 1000);
+    const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
+    await Promise.all(deletePromises);
+
+    toast.success('Banco de dados resetado com sucesso!');
+    window.location.reload(); 
   } catch (error) {
-    toast.error('Erro ao zerar simulação.');
+    console.error(error);
+    toast.error('Erro ao conectar com o banco.');
   }
 };
-
   const getProfileIcon = () => {
     if (user.name.includes('LENEVES')) return Settings;
     if (user.name.includes('ALEXANDRE')) return LayoutDashboard;
@@ -958,10 +959,7 @@ const handleResetSimulation = async () => {
               {(user.role === 'developer' || user.email === 'leneves@alupar.com.br') && (
                 <div className="pt-4 border-t border-white/10">
                   <button
-                    onClick={() => {
-                      setShowResetConfirm(true);
-                      setIsSidebarOpen(false);
-                    }}
+                    onClick={handleResetSimulation}
                     className="w-full flex items-center gap-4 p-6 rounded-2xl transition-all font-black uppercase text-lg text-orange-400 bg-orange-500/5 border-2 border-orange-500/20 shadow-lg shadow-orange-900/20"
                   >
                     <RefreshCw size={32} />
