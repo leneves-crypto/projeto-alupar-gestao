@@ -8,6 +8,9 @@ import {
 import { db } from '../firebase';
 import { collection, query, getDocs, deleteDoc } from 'firebase/firestore';
 import { toast } from 'react-toastify';
+import { db } from '../firebase';
+import { collection, query, getDocs, deleteDoc } from 'firebase/firestore';
+import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'motion/react';
 import { UserProfile, MaintenanceTask, GroundingPoint, WeatherData, Team, Risk, Abnormality, PMOReport, Asset, Sector, SectorActivity } from '../types';
 import { WeatherWidget } from './WeatherWidget';
@@ -749,26 +752,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
 
 const handleResetSimulation = async () => {
     try {
-      toast.info('Limpando base de dados...');
+      toast.info('Limpando banco de dados...');
       
-      const colecoes = ["simulacoes", "logs"];
+      // Tentamos limpar as coleções conhecidas
+      const colecoes = ["simulacoes", "logs", "atividades"];
       
       for (const nomeCol of colecoes) {
         const q = query(collection(db, nomeCol));
         const querySnapshot = await getDocs(q);
         
-        // Deletando...
         const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
         await Promise.all(deletePromises);
       }
 
-      toast.success('Sucesso! Reiniciando...');
-      setTimeout(() => {
-        window.location.reload();
-      }, 1000);
+      toast.success('Banco de dados resetado!');
+      setTimeout(() => window.location.reload(), 1000);
     } catch (error) {
-      console.error("Erro:", error);
-      toast.error('Erro de permissão no Firebase.');
+      console.error(error);
+      toast.error('Erro de permissão ou conexão.');
     }
   };
   const getProfileIcon = () => {
