@@ -1,29 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { toast } from 'sonner';
 import { 
-  LayoutDashboard, 
-  ClipboardCheck, 
-  Shield, 
-  ShieldCheck,
-  Settings,
-  HardHat,
-  Compass,
-  CloudSun, 
-  BookOpen, 
-  LogOut,
-  User as UserIcon,
-  AlertTriangle,
-  Menu,
-  X,
-  Check,
-  FileBarChart,
-  FileText,
-  Zap,
-  LayoutGrid,
-  RefreshCw,
-  ShieldAlert,
-  Lock
+  LayoutDashboard, ClipboardCheck, Shield, ShieldCheck, Settings, HardHat,
+  Compass, CloudSun, BookOpen, LogOut, User as UserIcon, AlertTriangle,
+  Menu, X, Check, FileBarChart, FileText, Zap, LayoutGrid, RefreshCw,
+  ShieldAlert, Lock, Database, TrendingUp, Users, Clock, CheckCircle
 } from 'lucide-react';
+import { db } from '../firebase';
+import { collection, query, getDocs, deleteDoc } from 'firebase/firestore';
+import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'motion/react';
 import { UserProfile, MaintenanceTask, GroundingPoint, WeatherData, Team, Risk, Abnormality, PMOReport, Asset, Sector, SectorActivity } from '../types';
 import { WeatherWidget } from './WeatherWidget';
@@ -764,26 +748,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ user, onLogout }) => {
   };
 
 const handleResetSimulation = async () => {
-  try {
-    const confirmacao = window.confirm("ISSO APAGARÁ OS DADOS DE TODAS AS EQUIPES. Confirma?");
+    const confirmacao = window.confirm("ATENÇÃO: Isso apagará os dados de TODAS as equipes. Confirma?");
     if (!confirmacao) return;
 
-    toast.info('Limpando banco de dados...');
+    try {
+      toast.info('Limpando banco de dados...');
+      const colecoes = ["simulacoes", "logs"];
+      
+      for (const nomeCol of colecoes) {
+        const q = query(collection(db, nomeCol));
+        const querySnapshot = await getDocs(q);
+        
+        const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
+        await Promise.all(deletePromises);
+      }
 
-    // Importante: Isso aqui vai deletar os registros do dia 20 para todos
-    const q = query(collection(db, "simulacoes")); // Verifique se o nome da sua coleção é 'simulacoes' ou 'logs'
-    const querySnapshot = await getDocs(q);
-    
-    const deletePromises = querySnapshot.docs.map(doc => deleteDoc(doc.ref));
-    await Promise.all(deletePromises);
-
-    toast.success('Banco de dados resetado com sucesso!');
-    window.location.reload(); 
-  } catch (error) {
-    console.error(error);
-    toast.error('Erro ao conectar com o banco.');
-  }
-};
+      toast.success('Sistema zerado com sucesso!');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (error) {
+      console.error("Erro ao resetar:", error);
+      toast.error('Erro ao conectar com o Firebase.');
+    }
+  };
   const getProfileIcon = () => {
     if (user.name.includes('LENEVES')) return Settings;
     if (user.name.includes('ALEXANDRE')) return LayoutDashboard;
